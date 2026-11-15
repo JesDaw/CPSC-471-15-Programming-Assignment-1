@@ -1,27 +1,14 @@
-# *****************************************************************
-# serv.py - simplified FTP server (CPSC471 Programming Assignment 1)
-#
-# Usage: python3 serv.py <PORT NUMBER>
-#
-# One control connection per client lasts for the whole session.
-# A new data connection is opened BY THE SERVER to the client for
-# every ls / get / put, and closed when the transfer finishes.
-# See PROTOCOL.txt for the message formats.
-# *****************************************************************
 import os
 import socket
 import sys
 import threading
 
-HEADER_LEN = 10          # every message starts with a 10-byte ASCII length
-CHUNK = 65536            # file transfer chunk size
-DATA_TIMEOUT = 15        # seconds to wait when connecting to client data port
+HEADER_LEN = 10
+CHUNK = 65536
+DATA_TIMEOUT = 15
 
 
-# ------------------------------------------------------------------
-# Reliable send / receive helpers (send()/recv() may move fewer
-# bytes than requested, so we loop).
-# ------------------------------------------------------------------
+
 def recv_all(sock, num_bytes):
     """Receive exactly num_bytes. Returns fewer only if peer closed."""
     buf = bytearray()
@@ -63,9 +50,6 @@ def send_blob(sock, data):
     send_all(sock, str(len(data)).zfill(HEADER_LEN).encode("ascii") + data)
 
 
-# ------------------------------------------------------------------
-# Data channel
-# ------------------------------------------------------------------
 def open_data_channel(client_ip, port):
     """The server connects to the ephemeral port the client is listening on."""
     data_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -80,11 +64,6 @@ def valid_filename(name):
     return bool(name) and name == os.path.basename(name) and name not in (".", "..")
 
 
-# ------------------------------------------------------------------
-# Command handlers. Each returns (success, message) for logging.
-# The control-channel "ready" reply has already been decided by
-# the caller; these handle the transfer and the final status.
-# ------------------------------------------------------------------
 def do_ls(ctrl, client_ip, port):
     listing = "\n".join(sorted(os.listdir("."))) + "\n"
     send_msg(ctrl, "OK")
@@ -132,7 +111,7 @@ def do_put(ctrl, client_ip, port, name):
                 received += len(chunk)
         if received != size:
             raise IOError("incomplete transfer (%d of %d bytes)" % (received, size))
-        os.replace(tmp_name, name)      # only expose complete files
+        os.replace(tmp_name, name)
     except Exception:
         if os.path.exists(tmp_name):
             os.remove(tmp_name)
@@ -142,9 +121,6 @@ def do_put(ctrl, client_ip, port, name):
     return size
 
 
-# ------------------------------------------------------------------
-# One thread per client session
-# ------------------------------------------------------------------
 def handle_client(ctrl, addr):
     client_ip = addr[0]
     print("Client connected:", addr)
@@ -168,7 +144,6 @@ def handle_client(ctrl, addr):
                 print("%s: FAILURE - unknown command" % cmd)
                 continue
 
-            # Request format: "<cmd> <port>" (ls) or "<cmd> <port> <filename>"
             try:
                 if cmd == "ls":
                     port, name = int(parts[1]), None
@@ -180,7 +155,6 @@ def handle_client(ctrl, addr):
                 print("%s: FAILURE - malformed request" % cmd)
                 continue
 
-            # Validate before telling the client to expect a transfer.
             if cmd in ("get", "put") and not valid_filename(name):
                 send_msg(ctrl, "ERR invalid file name")
                 print("%s %s: FAILURE - invalid file name" % (cmd, name))

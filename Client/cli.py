@@ -1,26 +1,10 @@
-# *****************************************************************
-# cli.py - simplified FTP client (CPSC471 Programming Assignment 1)
-#
-# Usage: python3 cli.py <server machine> <server port>
-#
-# Commands:
-#   ftp> get <file name>   download a file from the server
-#   ftp> put <file name>   upload a file to the server
-#   ftp> ls                list files on the server
-#   ftp> quit              disconnect and exit
-#
-# The first connection (control channel) lasts the whole session.
-# For every ls/get/put the client opens an ephemeral port, tells the
-# server about it over the control channel, and the SERVER connects
-# back to that port to form the data channel.
-# *****************************************************************
 import os
 import socket
 import sys
 
 HEADER_LEN = 10
 CHUNK = 65536
-ACCEPT_TIMEOUT = 15      # seconds to wait for the server to connect back
+ACCEPT_TIMEOUT = 15
 
 
 def recv_all(sock, num_bytes):
@@ -91,7 +75,7 @@ def accept_data(listener):
     try:
         data_sock, _ = listener.accept()
     finally:
-        listener.close()           # one data connection per transfer
+        listener.close()
     return data_sock
 
 
@@ -203,7 +187,7 @@ def main():
 
     ctrl = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     try:
-        ctrl.connect((server_name, server_port))   # DNS lookup happens here
+        ctrl.connect((server_name, server_port))
     except (socket.error, socket.gaierror) as e:
         print("Could not connect to %s:%d - %s" % (server_name, server_port, e))
         sys.exit(1)
