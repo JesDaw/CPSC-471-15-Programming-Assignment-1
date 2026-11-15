@@ -8,7 +8,6 @@ ACCEPT_TIMEOUT = 15
 
 
 def recv_all(sock, num_bytes):
-    """Receive exactly num_bytes (fewer only if the peer closed)."""
     buf = bytearray()
     while len(buf) < num_bytes:
         tmp = sock.recv(min(CHUNK, num_bytes - len(buf)))
@@ -41,7 +40,6 @@ def recv_msg(sock):
 
 
 def open_listener():
-    """Bind to port 0 so the OS picks a free ephemeral port."""
     s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     s.bind(("", 0))
     s.listen(1)
@@ -50,11 +48,6 @@ def open_listener():
 
 
 def request(ctrl, request_fmt, filename=None):
-    """
-    Common start of ls/get/put. Opens the ephemeral listener, sends the
-    request, and waits for the server's OK/ERR on the control channel.
-    Returns (listener, error). If error is not None, listener is None.
-    """
     listener, port = open_listener()
     msg = request_fmt + " " + str(port)
     if filename is not None:
@@ -80,7 +73,6 @@ def accept_data(listener):
 
 
 def final_status(ctrl):
-    """Read the server's closing status for a transfer."""
     reply = recv_msg(ctrl)
     if reply is None:
         raise ConnectionError("server closed the control connection")

@@ -10,7 +10,6 @@ DATA_TIMEOUT = 15
 
 
 def recv_all(sock, num_bytes):
-    """Receive exactly num_bytes. Returns fewer only if peer closed."""
     buf = bytearray()
     while len(buf) < num_bytes:
         tmp = sock.recv(min(CHUNK, num_bytes - len(buf)))
@@ -21,20 +20,17 @@ def recv_all(sock, num_bytes):
 
 
 def send_all(sock, data):
-    """Send every byte of data."""
     sent = 0
     while sent < len(data):
         sent += sock.send(data[sent:])
 
 
 def send_msg(sock, text):
-    """Send a control message: 10-byte zero-padded length + UTF-8 text."""
     payload = text.encode("utf-8")
     send_all(sock, str(len(payload)).zfill(HEADER_LEN).encode("ascii") + payload)
 
 
 def recv_msg(sock):
-    """Receive one control message. Returns None if peer closed."""
     header = recv_all(sock, HEADER_LEN)
     if len(header) != HEADER_LEN:
         return None
@@ -46,12 +42,10 @@ def recv_msg(sock):
 
 
 def send_blob(sock, data):
-    """Send a data-channel blob (size header + bytes)."""
     send_all(sock, str(len(data)).zfill(HEADER_LEN).encode("ascii") + data)
 
 
 def open_data_channel(client_ip, port):
-    """The server connects to the ephemeral port the client is listening on."""
     data_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     data_sock.settimeout(DATA_TIMEOUT)
     data_sock.connect((client_ip, port))
@@ -60,7 +54,6 @@ def open_data_channel(client_ip, port):
 
 
 def valid_filename(name):
-    """Only plain file names in the server's directory are allowed."""
     return bool(name) and name == os.path.basename(name) and name not in (".", "..")
 
 
