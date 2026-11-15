@@ -13,7 +13,7 @@ How to run:
   2. Start the client (In another terminal/directory):
         python3 cli.py <server machine> <server port>
         Ex:  python3 cli.py ecs.fullerton.edu 1234
-            python3 cli.py localhost 1234
+             python3 cli.py localhost 1234 (if you are running a server locally)
   3. At the "ftp>" prompt:
          ls              list files on the server
          get <file>      download <file> from the server
