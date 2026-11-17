@@ -1,7 +1,6 @@
 import os
 import socket
 import sys
-import threading
 
 HEADER_LEN = 10
 CHUNK = 65536
@@ -22,7 +21,10 @@ def recv_all(sock, num_bytes):
 def send_all(sock, data):
     sent = 0
     while sent < len(data):
-        sent += sock.send(data[sent:])
+        count = sock.send(data[sent:])
+        if count == 0:
+            raise ConnectionError("connection closed during send")
+        sent += count
 
 
 def send_msg(sock, text):
@@ -33,6 +35,8 @@ def send_msg(sock, text):
 def recv_msg(sock):
     header = recv_all(sock, HEADER_LEN)
     if len(header) != HEADER_LEN:
+        return None
+    if not header.isdigit():
         return None
     size = int(header)
     payload = recv_all(sock, size)
@@ -93,6 +97,8 @@ def do_put(ctrl, client_ip, port, name):
         header = recv_all(data_sock, HEADER_LEN)
         if len(header) != HEADER_LEN:
             raise IOError("data connection closed before size header")
+        if not header.isdigit():
+            raise IOError("invalid file size")
         size = int(header)
         received = 0
         with open(tmp_name, "wb") as f:
@@ -148,6 +154,10 @@ def handle_client(ctrl, addr):
                 print("%s: FAILURE - malformed request" % cmd)
                 continue
 
+            if not 1 <= port <= 65535:
+                send_msg(ctrl, "ERR invalid data port")
+                print("%s: FAILURE - invalid data port" % cmd)
+                continue
             if cmd in ("get", "put") and not valid_filename(name):
                 send_msg(ctrl, "ERR invalid file name")
                 print("%s %s: FAILURE - invalid file name" % (cmd, name))
@@ -199,7 +209,7 @@ def main():
     try:
         while True:
             ctrl, addr = welcome.accept()
-            threading.Thread(target=handle_client, args=(ctrl, addr), daemon=True).start()
+            handle_client(ctrl, addr)
     except KeyboardInterrupt:
         print("\nShutting down")
     finally:
