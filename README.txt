@@ -4,6 +4,7 @@ CPSC 471 - Programming Assignment 1: Simplified FTP
 Partners:
   1. Jesse Dawson, jesse.dawson@csu.fullerton.edu
   2. Anthony Acevedo, aracevedo@csu.fullerton.edu
+  3. Joseph Scarnecchia, josephdscarnecchia@csu.fullerton.edu
 
 Programming language: Python 3
 
